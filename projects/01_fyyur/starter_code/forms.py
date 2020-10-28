@@ -156,7 +156,7 @@ class ArtistForm(Form):
         ]
     )
     city = StringField(
-        'city', validators=[DataRequired()]
+        'city', validators=[DataRequired(), length(max=120)]
     )
     state = SelectField(
         'state', validators=[DataRequired()],
@@ -215,12 +215,22 @@ class ArtistForm(Form):
         ]
     )
     phone = StringField(
-        # TODO implement validation logic for state
-        'phone'
+        'phone', validators=[DataRequired(), length(max=12)]
+    )
+    website = StringField(
+        'website', validators=[URL(), length(max=120)]
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
-        'facebook_link', validators=[URL()]
+        'facebook_link', validators=[URL(), length(max=120)]
+    )
+    seeking_venue = BooleanField(
+        'seeking_venue', validators=[DataRequired()]
+    )
+    seeking_description = StringField(
+        'seeking_description', validators=[length(max=500)]
+    )
+    image_link = StringField(
+        'image_link', validators=[URL(), length(max=500)]
     )
 
 # TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
