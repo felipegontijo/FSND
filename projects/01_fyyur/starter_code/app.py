@@ -40,7 +40,7 @@ class Venue(db.Model):
   address = db.Column(db.String(120), nullable=False, unique=True)
   city = db.Column(db.String(120), nullable=False)
   state = db.Column(db.String(120), nullable=False)
-  phone = db.Column(db.String(120), nullable=False, unique=True)
+  phone = db.Column(db.String(12), nullable=False, unique=True)
   website = db.Column(db.String(120), unique=True)
   facebook_link = db.Column(db.String(120), unique=True)
   seeking_talent = db.Column(db.Boolean, nullable=False)
