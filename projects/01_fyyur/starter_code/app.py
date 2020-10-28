@@ -8,9 +8,10 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects import postgresql
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
+from flask_wtf import FlaskForm, CSRFProtect
 from forms import *
 from flask_migrate import Migrate
 import sys
@@ -23,9 +24,10 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
-migrate = Migrate(app,db)
+migrate = Migrate(app,db,compare_type=True)
+csrf = CSRFProtect(app)
 
-# TODO: connect to a local postgresql database
+# TODO: connect to a local database
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -36,7 +38,7 @@ class Venue(db.Model):
 
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String, nullable=False, unique=True)
-  genres = db.Column(db.PickleType(), nullable=False)
+  genres = db.Column(postgresql.ARRAY(db.String), nullable=False)
   address = db.Column(db.String(120), nullable=False, unique=True)
   city = db.Column(db.String(120), nullable=False)
   state = db.Column(db.String(120), nullable=False)
@@ -140,7 +142,7 @@ def venues():
       "num_upcoming_shows": 0,
     }]
   }]
-  return render_template('pages/venues.html', areas=data);
+  return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -244,22 +246,64 @@ def show_venue(venue_id):
 #  Create Venue
 #  ----------------------------------------------------------------
 
-@app.route('/venues/create', methods=['GET'])
+@app.route('/venues/create', methods=['GET', 'POST'])
 def create_venue_form():
   form = VenueForm()
-  return render_template('forms/new_venue.html', form=form)
 
-@app.route('/venues/create', methods=['POST'])
-def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  if form.validate_on_submit():
+    error = False
+    # venue = {}
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+    name = request.form.get('name')
+    genres = request.form.getlist('genres')
+    address = request.form.get('address')
+    city = request.form.get('city')
+    state = request.form.get('state')
+    phone = request.form.get('phone')
+    website = request.form.get('website')
+    facebook_link = request.form.get('facebook_link')
+    
+    talent = request.form.get('seeking_talent')
+    if talent == 'y':
+      seeking_talent = True
+    else:
+      seeking_talent = False
+    
+    seeking_description = request.form.get('seeking_description')
+    image_link = request.form.get('image_link')
+
+    try:
+      new_venue = Venue(
+        name=name,
+        genres=genres,
+        address=address,
+        city=city,
+        state=state,
+        phone=phone,
+        website=website,
+        facebook_link=facebook_link,
+        seeking_talent=seeking_talent,
+        seeking_description=seeking_description,
+        image_link=image_link
+      )
+      db.session.add(new_venue)
+      db.session.commit()
+      # venue['name'] = new_venue.name
+    except:
+      error = True
+      db.session.rollback()
+      print(sys.exc_info())
+    finally:
+      db.session.close()
+    if error:
+      flash('An error occurred. Venue ' + name + ' could not be listed.')
+    else:
+      flash('Venue ' + name + ' was successfully listed!')
+    return render_template('pages/home.html')
+  else:
+    for key in form.errors:
+      flash(form.errors[key])
+    return render_template('forms/new_venue.html', form=form)
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
