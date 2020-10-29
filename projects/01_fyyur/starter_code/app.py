@@ -47,7 +47,7 @@ class Venue(db.Model):
   facebook_link = db.Column(db.String(120), unique=True)
   seeking_talent = db.Column(db.Boolean, nullable=False)
   seeking_description = db.Column(db.String(500))
-  image_link = db.Column(db.String(500), unique=True)
+  image_link = db.Column(db.String(500), nullable=False, unique=True)
   
   shows = db.relationship('Show', backref='venue', cascade='all, delete-orphan', lazy=True)
 
@@ -69,7 +69,7 @@ class Artist(db.Model):
   facebook_link = db.Column(db.String(120), unique=True)
   seeking_venue = db.Column(db.Boolean, nullable=False)
   seeking_description = db.Column(db.String(500))
-  image_link = db.Column(db.String(500), unique=True)
+  image_link = db.Column(db.String(500), nullable=False, unique=True)
   
   shows = db.relationship('Show', backref='artist', cascade='all, delete-orphan', lazy=True)
 
