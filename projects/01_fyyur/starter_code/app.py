@@ -61,10 +61,10 @@ class Artist(db.Model):
 
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String, nullable=False, unique=True)
-  genres = db.Column(db.PickleType(), nullable=False)
+  genres = db.Column(postgresql.ARRAY(db.String), nullable=False)
   city = db.Column(db.String(120), nullable=False)
   state = db.Column(db.String(120), nullable=False)
-  phone = db.Column(db.String(120), nullable=False, unique=True)
+  phone = db.Column(db.String(12), nullable=False, unique=True)
   website = db.Column(db.String(120), unique=True)
   facebook_link = db.Column(db.String(120), unique=True)
   seeking_venue = db.Column(db.Boolean, nullable=False)
