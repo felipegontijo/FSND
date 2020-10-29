@@ -530,7 +530,6 @@ def create_artist_form():
       flash('Artist ' + name + ' was successfully listed!')
     return render_template('pages/home.html')
   else:
-    flash('Some errors occurred: ')
     for key in form.errors:
       flash(form.errors[key])
     return render_template('forms/new_artist.html', form=form)

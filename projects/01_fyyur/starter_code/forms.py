@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
-from wtforms.validators import DataRequired, AnyOf, URL, length, NumberRange
+from wtforms.validators import DataRequired, AnyOf, URL, length, NumberRange, Optional
 
 class ShowForm(FlaskForm):
     artist_id = StringField(
@@ -111,16 +111,16 @@ class VenueForm(FlaskForm):
         'phone', validators=[DataRequired(), length(max=12)]
     )
     website = StringField(
-        'website', validators=[URL(), length(max=120)]
+        'website', validators=[Optional(), URL(), length(max=120)]
     )
     facebook_link = StringField(
-        'facebook_link', validators=[URL(), length(max=120)]
+        'facebook_link', validators=[Optional(), URL(), length(max=120)]
     )
     seeking_talent = BooleanField(
         'seeking_talent', validators=[DataRequired()]
     )
     seeking_description = StringField(
-        'seeking_description', validators=[length(max=500)]
+        'seeking_description', validators=[Optional(), length(max=500)]
     )
     image_link = StringField(
         'image_link', validators=[URL(), length(max=500)]
@@ -218,16 +218,16 @@ class ArtistForm(FlaskForm):
         'phone', validators=[DataRequired(), length(max=12)]
     )
     website = StringField(
-        'website', validators=[URL(), length(max=120)]
+        'website', validators=[Optional(), URL(), length(max=120)]
     )
     facebook_link = StringField(
-        'facebook_link', validators=[URL(), length(max=120)]
+        'facebook_link', validators=[Optional(), URL(), length(max=120)]
     )
     seeking_venue = BooleanField(
         'seeking_venue', validators=[DataRequired()]
     )
     seeking_description = StringField(
-        'seeking_description', validators=[length(max=500)]
+        'seeking_description', validators=[Optional(), length(max=500)]
     )
     image_link = StringField(
         'image_link', validators=[URL(), length(max=500)]
