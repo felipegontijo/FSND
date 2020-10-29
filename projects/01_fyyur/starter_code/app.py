@@ -9,6 +9,8 @@ from flask import Flask, render_template, request, Response, flash, redirect, ur
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import Bundle
+from sqlalchemy import distinct
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import FlaskForm, CSRFProtect
@@ -43,8 +45,8 @@ class Venue(db.Model):
   city = db.Column(db.String(120), nullable=False)
   state = db.Column(db.String(120), nullable=False)
   phone = db.Column(db.String(12), nullable=False, unique=True)
-  website = db.Column(db.String(120), unique=True)
-  facebook_link = db.Column(db.String(120), unique=True)
+  website = db.Column(db.String(120))
+  facebook_link = db.Column(db.String(120))
   seeking_talent = db.Column(db.Boolean, nullable=False)
   seeking_description = db.Column(db.String(500))
   image_link = db.Column(db.String(500), nullable=False, unique=True)
@@ -65,8 +67,8 @@ class Artist(db.Model):
   city = db.Column(db.String(120), nullable=False)
   state = db.Column(db.String(120), nullable=False)
   phone = db.Column(db.String(12), nullable=False, unique=True)
-  website = db.Column(db.String(120), unique=True)
-  facebook_link = db.Column(db.String(120), unique=True)
+  website = db.Column(db.String(120))
+  facebook_link = db.Column(db.String(120))
   seeking_venue = db.Column(db.Boolean, nullable=False)
   seeking_description = db.Column(db.String(500))
   image_link = db.Column(db.String(500), nullable=False, unique=True)
@@ -121,27 +123,27 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  data = []
+  places = Bundle('places', Venue.city, Venue.state)
+  for row in db.session.query(places).distinct():
+    city = row.places.city
+    state = row.places.state
+    place = {}
+    place['city'] = city
+    place['state'] = state
+    venues = []
+    for venue_id, venue_name in db.session.query(Venue.id, Venue.name).filter_by(city=city):
+      this_venue = {}
+      this_venue['id'] = venue_id
+      this_venue['name'] = venue_name
+      num_upcoming_shows = db.session.query(Show.id).filter(
+        Show.venue_id == venue_id, 
+        Show.start_time > datetime.now()
+      ).count()
+      this_venue['num_upcoming_shows'] = num_upcoming_shows
+      venues.append(this_venue)
+    place['venues'] = venues
+    data.append(place)
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
