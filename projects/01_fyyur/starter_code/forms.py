@@ -117,7 +117,9 @@ class VenueForm(FlaskForm):
         'facebook_link', validators=[Optional(), URL(), length(max=120)]
     )
     seeking_talent = BooleanField(
-        'seeking_talent', validators=[DataRequired()]
+        'seeking_talent',
+        validators=[Optional()],
+        default= False
     )
     seeking_description = StringField(
         'seeking_description', validators=[Optional(), length(max=500)]
@@ -224,7 +226,9 @@ class ArtistForm(FlaskForm):
         'facebook_link', validators=[Optional(), URL(), length(max=120)]
     )
     seeking_venue = BooleanField(
-        'seeking_venue', validators=[DataRequired()]
+        'seeking_venue',
+        validators=[Optional()],
+        default= False
     )
     seeking_description = StringField(
         'seeking_description', validators=[Optional(), length(max=500)]
