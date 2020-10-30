@@ -10,7 +10,7 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Bundle
-from sqlalchemy import distinct
+from sqlalchemy import distinct, or_
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import FlaskForm
@@ -378,7 +378,7 @@ def search_artists():
   
   response['count'] = count
   response['data'] = data
-  
+
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
@@ -628,6 +628,30 @@ def create_shows():
     for key in form.errors:
       flash(form.errors[key])
     return render_template('forms/new_show.html', form=form)
+
+@app.route('/shows/search', methods=['POST'])
+@csrf.exempt
+def search_shows():
+  search_term = request.form.get('search_term')
+  search_term_formatted = f'%{search_term}%'
+
+  response = {}
+  data = []
+  count = 0
+
+  for artist_name, show_id, show_start_time, venue_name in db.session.query(Artist.name).join(Artist.shows).join(Venue).add_columns(Show.id, Show.start_time, Venue.name).filter(Show.start_time > datetime.now()).filter(or_(Artist.name.ilike(search_term_formatted), Venue.name.ilike(search_term_formatted))):
+    count += 1
+    show = {}
+    show['id'] = show_id
+    show['artist_name'] = artist_name
+    show['venue_name'] = venue_name
+    show['start_time'] = format_datetime(show_start_time)
+    data.append(show)
+  
+  response['count'] = count
+  response['data'] = data
+
+  return render_template('pages/search_shows.html', results=response, search_term=search_term)
 
 @app.errorhandler(404)
 def not_found_error(error):

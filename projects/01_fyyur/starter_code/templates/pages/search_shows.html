@@ -1,0 +1,20 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Fyyur | Shows Search{% endblock %}
+{% block content %}
+<h3>Number of search results for "{{ search_term }}": {{ results.count }}</h3>
+    <ul class="items">
+        {% for show in results.data %}
+        <li>
+            <a href="/shows/{{ show.id }}">
+                <i class="fas fa-music"></i>
+                <div class="item">
+                    <h5>{{ show.artist_name }} playing at {{ show.venue_name }} on {{ show.start_time|datetime('full') }}</h5>
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+
+{#    Todo implement show search frontend #}
+
+{% endblock %}
