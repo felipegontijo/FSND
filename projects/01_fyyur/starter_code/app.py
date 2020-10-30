@@ -436,29 +436,83 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
+  this_venue = Venue.query.get(venue_id)
+
+  venue = {
+    'id': venue_id,
+    'name': this_venue.name,
+    'genres': this_venue.genres,
+    'address': this_venue.address,
+    'city': this_venue.city,
+    'state': this_venue.state,
+    'phone': this_venue.phone,
+    'website': this_venue.website,
+    'facebook_link': this_venue.facebook_link,
+    'seeking_talent': this_venue.seeking_talent,
+    'seeking_description': this_venue.seeking_description,
+    'image_link': this_venue.image_link
   }
-  # TODO: populate form with values from venue with ID <venue_id>
+
+  form = VenueForm()
+  form.name.data = venue['name']
+  form.genres.data = venue['genres']
+  form.address.data = venue['address']
+  form.city.data = venue['city']
+  form.state.data = venue['state']
+  form.phone.data = venue['phone']
+  form.website.data = venue['website']
+  form.facebook_link.data = venue['facebook_link']
+  form.seeking_talent.data = venue['seeking_talent']
+  form.seeking_description.data = venue['seeking_description']
+  form.image_link.data = venue['image_link']
+
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
+  this_venue = Venue.query.get(venue_id)
+  form = VenueForm()
+
+  if form.validate_on_submit():
+    error = False
+    try:
+      this_venue.name = request.form.get('name')
+      this_venue.genres = request.form.getlist('genres')
+      this_venue.address = request.form.get('address')
+      this_venue.city = request.form.get('city')
+      this_venue.state = request.form.get('state')
+      this_venue.phone = request.form.get('phone')
+      this_venue.website = request.form.get('website')
+      this_venue.facebook_link = request.form.get('facebook_link')
+
+      seeking_talent = request.form.get('seeking_talent')
+      if seeking_talent == 'y':
+        this_venue.seeking_talent = True
+      else:
+        this_venue.seeking_talent = False
+
+      this_venue.seeking_description = request.form.get('seeking_description')
+      this_venue.image_link = request.form.get('image_link')
+
+      db.session.commit()
+    except:
+      error = True
+      db.session.rollback()
+      print(sys.exc_info())
+    finally:
+      db.session.close()
+    if error:
+      flash('An error occurred. Venue ' + request.form.get('name') + ' could not be updated.')
+      return redirect(url_for('edit_venue_submission', venue_id=venue_id))
+    else:
+      flash('Venue ' + request.form.get('name') + ' was updated successfully!')
+    
+    return redirect(url_for('show_venue', venue_id=venue_id))
+  else:
+    for key in form.errors:
+      flash(form.errors[key])
+    
+    return redirect(url_for('edit_venue_submission', venue_id=venue_id))
 
 #  Create Artist
 #  ----------------------------------------------------------------
