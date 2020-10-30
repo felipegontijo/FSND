@@ -312,7 +312,7 @@ def delete_venue(venue_id):
 def artists():
   data = []
 
-  for artist_id, artist_name in db.session.query(Artist.id, Artist.name):
+  for artist_id, artist_name in db.session.query(Artist.id, Artist.name).order_by(Artist.name):
     artist = {}
     artist['id'] = artist_id
     artist['name'] = artist_name
