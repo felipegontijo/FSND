@@ -30,8 +30,6 @@ db = SQLAlchemy(app)
 migrate = Migrate(app,db,compare_type=True)
 csrf = CSRFProtect(app)
 
-# TODO: connect to a local database
-
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
@@ -57,8 +55,6 @@ class Venue(db.Model):
   def __repr__(self):
     return f'<Venue ID: {self.id}, name: {self.name}>'
 
-  # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
 class Artist(db.Model):
   __tablename__ = 'artists'
 
@@ -79,10 +75,6 @@ class Artist(db.Model):
   def __repr__(self):
     return f'<Artist ID: {self.id}, name: {self.name}>'
 
-  # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
-
 class Show(db.Model):
   __tablename__ = 'shows'
 
@@ -99,7 +91,6 @@ class Show(db.Model):
 #----------------------------------------------------------------------------#
 
 def format_datetime(value, format='medium'):
-  # date = dateutil.parser.parse(value)
   if isinstance(value, str):
     date = dateutil.parser.parse(value)
   else:
@@ -126,27 +117,32 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
+
   data = []
   places = Bundle('places', Venue.city, Venue.state)
-  for row in db.session.query(places).distinct():
+
+  for row in db.session.query(places).order_by(Venue.city).distinct():
+
     city = row.places.city
     state = row.places.state
     place = {}
     place['city'] = city
     place['state'] = state
     venues = []
-    for venue_id, venue_name in db.session.query(Venue.id, Venue.name).filter_by(city=city):
+
+    for venue_id, venue_name in db.session.query(Venue.id, Venue.name).filter_by(city=city).order_by(Venue.name):
       this_venue = {}
       this_venue['id'] = venue_id
       this_venue['name'] = venue_name
+
       num_upcoming_shows = db.session.query(Show.id).filter(
         Show.venue_id == venue_id, 
         Show.start_time > datetime.now()
       ).count()
       this_venue['num_upcoming_shows'] = num_upcoming_shows
+
       venues.append(this_venue)
+    
     place['venues'] = venues
     data.append(place)
   return render_template('pages/venues.html', areas=data)
@@ -154,9 +150,6 @@ def venues():
 @app.route('/venues/search', methods=['POST'])
 @csrf.exempt
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   search_term = request.form.get('search_term')
   search_term_formatted = f'%{search_term}%'
 
@@ -180,14 +173,10 @@ def search_venues():
   
   response['count'] = count
   response['data'] = data
-
   return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
-  # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
-
   this_venue = Venue.query.get(venue_id)
 
   data = {}
@@ -205,34 +194,44 @@ def show_venue(venue_id):
   data['image_link'] = this_venue.image_link
 
   past_shows = []
-  for artist_id, artist_name, artist_image_link, show_start_time in db.session.query(Artist.id, Artist.name, Artist.image_link).join(Artist.shows).add_columns(Show.start_time).filter(Show.venue_id==venue_id).filter(Show.start_time<datetime.now()):
+  past_shows_count = 0
+  for artist_id, artist_name, artist_image_link, show_start_time in db.session.query(
+    Artist.id, Artist.name, Artist.image_link
+    ).join(Artist.shows
+    ).add_columns(Show.start_time
+    ).filter(Show.venue_id==venue_id
+    ).filter(Show.start_time<datetime.now()):
+    
     show = {}
     show['artist_id'] = artist_id
     show['artist_name'] = artist_name
     show['artist_image_link'] = artist_image_link
     show['start_time'] = show_start_time
+
     past_shows.append(show)
+    past_shows_count += 1
   data['past_shows'] = past_shows
+  data['past_shows_count'] = past_shows_count
 
   upcoming_shows = []
-  for artist_id, artist_name, artist_image_link, show_start_time in db.session.query(Artist.id, Artist.name, Artist.image_link).join(Artist.shows).add_columns(Show.start_time).filter(Show.venue_id==venue_id).filter(Show.start_time>datetime.now()):
+  upcoming_shows_count = 0
+  for artist_id, artist_name, artist_image_link, show_start_time in db.session.query(
+    Artist.id, Artist.name, Artist.image_link
+    ).join(Artist.shows
+    ).add_columns(Show.start_time
+    ).filter(Show.venue_id==venue_id
+    ).filter(Show.start_time>datetime.now()):
+
     show = {}
     show['artist_id'] = artist_id
     show['artist_name'] = artist_name
     show['artist_image_link'] = artist_image_link
     show['start_time'] = show_start_time
+
     upcoming_shows.append(show)
+    upcoming_shows_count += 1
   data['upcoming_shows'] = upcoming_shows
-
-  data['past_shows_count'] = db.session.query(Show.id).filter(
-    Show.venue_id == venue_id, 
-    Show.start_time < datetime.now()
-  ).count()
-
-  data['upcoming_shows_count'] = db.session.query(Show.id).filter(
-    Show.venue_id == venue_id, 
-    Show.start_time > datetime.now()
-  ).count()
+  data['upcoming_shows_count'] = upcoming_shows_count
 
   return render_template('pages/show_venue.html', venue=data)
 
@@ -290,10 +289,12 @@ def create_venue_form():
       flash('An error occurred. Venue ' + name + ' could not be listed.')
     else:
       flash('Venue ' + name + ' was successfully listed!')
+    
     return render_template('pages/home.html')
   else:
     for key in form.errors:
       flash(form.errors[key])
+    
     return render_template('forms/new_venue.html', form=form)
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -309,21 +310,19 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
   data = []
+
   for artist_id, artist_name in db.session.query(Artist.id, Artist.name):
     artist = {}
     artist['id'] = artist_id
     artist['name'] = artist_name
     data.append(artist)
+  
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
 @csrf.exempt
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
   search_term = request.form.get('search_term')
   search_term_formatted = f'%{search_term}%'
 
@@ -352,9 +351,6 @@ def search_artists():
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
-  # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
-
   this_artist = Artist.query.get(artist_id)
 
   data = {}
@@ -371,34 +367,42 @@ def show_artist(artist_id):
   data['image_link'] = this_artist.image_link
 
   past_shows = []
-  for venue_id, venue_name, venue_image_link, show_start_time in db.session.query(Venue.id, Venue.name, Venue.image_link).join(Venue.shows).add_columns(Show.start_time).filter(Show.artist_id==artist_id).filter(Show.start_time<datetime.now()):
+  past_shows_count = 0
+  for venue_id, venue_name, venue_image_link, show_start_time in db.session.query(
+    Venue.id, Venue.name, Venue.image_link
+    ).join(Venue.shows
+    ).add_columns(Show.start_time
+    ).filter(Show.artist_id==artist_id
+    ).filter(Show.start_time<datetime.now()):
+  
     show = {}
     show['venue_id'] = venue_id
     show['venue_name'] = venue_name
     show['venue_image_link'] = venue_image_link
     show['start_time'] = show_start_time
     past_shows.append(show)
+    past_shows_count += 1
   data['past_shows'] = past_shows
+  data['past_shows_count'] = past_shows_count
 
   upcoming_shows = []
-  for venue_id, venue_name, venue_image_link, show_start_time in db.session.query(Venue.id, Venue.name, Venue.image_link).join(Venue.shows).add_columns(Show.start_time).filter(Show.artist_id==artist_id).filter(Show.start_time>datetime.now()):
+  upcoming_shows_count = 0
+  for venue_id, venue_name, venue_image_link, show_start_time in db.session.query(
+    Venue.id, Venue.name, Venue.image_link
+    ).join(Venue.shows
+    ).add_columns(Show.start_time
+    ).filter(Show.artist_id==artist_id
+    ).filter(Show.start_time>datetime.now()):
+
     show = {}
     show['venue_id'] = venue_id
     show['venue_name'] = venue_name
     show['venue_image_link'] = venue_image_link
     show['start_time'] = show_start_time
     upcoming_shows.append(show)
+    upcoming_shows_count += 1
   data['upcoming_shows'] = upcoming_shows
-
-  data['past_shows_count'] = db.session.query(Show.id).filter(
-    Show.artist_id == artist_id, 
-    Show.start_time < datetime.now()
-  ).count()
-
-  data['upcoming_shows_count'] = db.session.query(Show.id).filter(
-    Show.artist_id == artist_id, 
-    Show.start_time > datetime.now()
-  ).count()
+  data['upcoming_shows_count'] = upcoming_shows_count
 
   return render_template('pages/show_artist.html', artist=data)
 
@@ -508,10 +512,12 @@ def create_artist_form():
       flash('An error occurred. Artist ' + name + ' could not be listed.')
     else:
       flash('Artist ' + name + ' was successfully listed!')
+    
     return render_template('pages/home.html')
   else:
     for key in form.errors:
       flash(form.errors[key])
+    
     return render_template('forms/new_artist.html', form=form)
 
 #  Shows
@@ -519,11 +525,14 @@ def create_artist_form():
 
 @app.route('/shows')
 def shows():
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
   data = []
 
-  for row in db.session.query(Artist.id, Artist.name, Artist.image_link).join(Artist.shows).add_columns(Show.start_time, Show.venue_id).filter(Show.start_time > datetime.now()).order_by(Show.start_time).all():
+  for row in db.session.query(Artist.id, Artist.name, Artist.image_link
+   ).join(Artist.shows
+   ).add_columns(Show.start_time, Show.venue_id
+   ).filter(Show.start_time > datetime.now()
+   ).order_by(Show.start_time).all():
+
     show = {}
     show['venue_id'] = row.venue_id
     show['venue_name'] = Venue.query.get(row.venue_id).name
@@ -531,14 +540,12 @@ def shows():
     show['artist_name'] = row.name
     show['artist_image_link'] = row.image_link
     show['start_time'] = format_datetime(row.start_time)
-    print(show)
     data.append(show)
 
   return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create', methods=['GET', 'POST'])
 def create_shows():
-  # renders form. do not touch.
   form = ShowForm()
 
   if form.validate_on_submit():
@@ -566,10 +573,12 @@ def create_shows():
       flash('An error occurred. Show could not be listed.')
     else:
       flash('Show was successfully listed!')
+    
     return render_template('pages/home.html')
   else:
     for key in form.errors:
       flash(form.errors[key])
+    
     return render_template('forms/new_show.html', form=form)
 
 @app.route('/shows/search', methods=['POST'])
@@ -582,7 +591,13 @@ def search_shows():
   data = []
   count = 0
 
-  for artist_name, show_id, show_start_time, venue_name in db.session.query(Artist.name).join(Artist.shows).join(Venue).add_columns(Show.id, Show.start_time, Venue.name).filter(Show.start_time > datetime.now()).filter(or_(Artist.name.ilike(search_term_formatted), Venue.name.ilike(search_term_formatted))):
+  for artist_name, show_id, show_start_time, venue_name in db.session.query(Artist.name
+   ).join(Artist.shows
+   ).join(Venue
+   ).add_columns(Show.id, Show.start_time, Venue.name
+   ).filter(Show.start_time > datetime.now()
+   ).filter(or_(Artist.name.ilike(search_term_formatted), Venue.name.ilike(search_term_formatted))
+   ).order_by(Show.start_time):
     count += 1
     show = {}
     show['id'] = show_id
@@ -626,10 +641,3 @@ if not app.debug:
 # Default port:
 if __name__ == '__main__':
     app.run()
-
-# Or specify port manually:
-'''
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-'''
