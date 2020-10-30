@@ -523,7 +523,7 @@ def shows():
   # TODO: replace with real venues data.
   data = []
 
-  for row in db.session.query(Artist.id, Artist.name, Artist.image_link).join(Artist.shows).add_columns(Show.start_time, Show.venue_id).filter(Show.start_time > datetime.now()).all():
+  for row in db.session.query(Artist.id, Artist.name, Artist.image_link).join(Artist.shows).add_columns(Show.start_time, Show.venue_id).filter(Show.start_time > datetime.now()).order_by(Show.start_time).all():
     show = {}
     show['venue_id'] = row.venue_id
     show['venue_name'] = Venue.query.get(row.venue_id).name
