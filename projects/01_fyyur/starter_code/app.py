@@ -13,7 +13,8 @@ from sqlalchemy.orm import Bundle
 from sqlalchemy import distinct
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import FlaskForm, CSRFProtect
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from forms import *
 from flask_migrate import Migrate
 import sys
@@ -151,11 +152,13 @@ def venues():
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
+@csrf.exempt
 def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
+
+  response = {
     "count": 1,
     "data": [{
       "id": 2,
@@ -163,7 +166,7 @@ def search_venues():
       "num_upcoming_shows": 0,
     }]
   }
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -601,6 +604,10 @@ def not_found_error(error):
 @app.errorhandler(500)
 def server_error(error):
     return render_template('errors/500.html'), 500
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+  return render_template('errors/csrf_error.html', reason=e.description), 400
 
 
 if not app.debug:
