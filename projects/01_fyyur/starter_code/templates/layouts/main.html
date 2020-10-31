@@ -131,5 +131,24 @@
   <script type="text/javascript" src="/static/js/libs/bootstrap-3.1.1.min.js" defer></script>
   <script type="text/javascript" src="/static/js/plugins.js" defer></script>
 
+  {% if (request.endpoint == 'show_venue') %}
+    <script>
+      const deleteButton = document.getElementById('delete-venue')
+      
+      deleteButton.onclick = (e) => {
+        const venueId = e.target.dataset.id
+        fetch(`/venues/${venueId}`, {
+          method: 'DELETE'
+        })
+        .then(response => {
+          if (response.ok) {
+            console.log('Deleted!')
+            location.replace('/')
+          }
+        })
+      }
+    </script>
+  {% endif %}
+
 </body>
 </html>
