@@ -78,7 +78,6 @@
               {% if (request.endpoint == 'shows') or
                 (request.endpoint == 'search_shows') %}
               <form class="search" method="post" action="/shows/search">
-                <!-- <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> -->
                 <input class="form-control"
                   type="search"
                   name="search_term"
