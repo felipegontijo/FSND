@@ -45,8 +45,10 @@ class TriviaTestCase(unittest.TestCase):
     def test_404_get_categories(self):
         """Test correct error handling for bad request"""
         res = self.client().get('/category')
+        data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['message'], 'resource not found')
 
 
 # Make the tests conveniently executable
