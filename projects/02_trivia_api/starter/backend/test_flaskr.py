@@ -34,6 +34,20 @@ class TriviaTestCase(unittest.TestCase):
     Write at least one test for each test for successful operation and for expected errors.
     """
 
+    def test_get_categories(self):
+        """Test correct retrieval of all categories from database"""
+        res = self.client().get('/categories')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['categories'])
+    
+    def test_404_get_categories(self):
+        """Test correct error handling for bad request"""
+        res = self.client().get('/category')
+
+        self.assertEqual(res.status_code, 404)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
