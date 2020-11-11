@@ -8,30 +8,29 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+def paginate_questions(request, query):
+  """Return questions paginated"""
+  page = request.args.get('page', 1, type=int)
+  start = (page - 1) * QUESTIONS_PER_PAGE
+  end = start + QUESTIONS_PER_PAGE
+
+  questions = [question.format() for question in query]
+  current_questions = questions[start:end]
+
+  return current_questions
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
   setup_db(app)
-  
-  '''
-  @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
-  '''
   CORS(app, resources={r'/api/*': {'origins': '*'}})
 
-  '''
-  @TODO: Use the after_request decorator to set Access-Control-Allow
-  '''
   @app.after_request
   def after_request(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE')
     return response
 
-  '''
-  @TODO: 
-  Create an endpoint to handle GET requests 
-  for all available categories.
-  '''
   @app.route('/categories')
   def get_categories():
     categories = Category.query.all()
@@ -40,7 +39,6 @@ def create_app(test_config=None):
     return jsonify({
       'categories': formatted_categories
     })
-
 
   '''
   @TODO: 
@@ -54,6 +52,21 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
+  @app.route('/questions')
+  def get_paginated_questions():
+    query = Question.query.order_by(Question.id).all()
+    current_questions = paginate_questions(request, query)
+    categories = [category.format() for category in Category.query.all()]
+
+    if len(current_questions) == 0:
+      abort(404)
+    
+    return jsonify({
+      'questions': current_questions,
+      'total_questions': len(query),
+      'categories': categories,
+      'current_category': None
+    })
 
   '''
   @TODO: 
@@ -107,11 +120,6 @@ def create_app(test_config=None):
   and shown whether they were correct or not. 
   '''
 
-  '''
-  @TODO: 
-  Create error handlers for all expected errors 
-  including 404 and 422. 
-  '''
   @app.errorhandler(400)
   def not_found(error):
     return jsonify({
