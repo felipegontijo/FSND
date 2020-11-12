@@ -14,8 +14,7 @@ def paginate_questions(request, query):
   start = (page - 1) * QUESTIONS_PER_PAGE
   end = start + QUESTIONS_PER_PAGE
 
-  questions = [question.format() for question in query]
-  current_questions = questions[start:end]
+  current_questions = query[start:end]
 
   return current_questions
 
@@ -27,43 +26,36 @@ def create_app(test_config=None):
 
   @app.after_request
   def after_request(response):
+    """Define CORS acceptances and behavior"""
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE')
     return response
 
   @app.route('/categories')
   def get_categories():
+    """GET /categories endpoint"""
     categories = Category.query.all()
-    formatted_categories = [category.format() for category in categories]
+    formatted_categories = {category.id: category.type for category in categories}
 
     return jsonify({
       'categories': formatted_categories
     })
 
-  '''
-  @TODO: 
-  Create an endpoint to handle GET requests for questions, 
-  including pagination (every 10 questions). 
-  This endpoint should return a list of questions, 
-  number of total questions, current category, categories. 
-
-  TEST: At this point, when you start the application
-  you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
-  Clicking on the page numbers should update the questions. 
-  '''
   @app.route('/questions')
   def get_paginated_questions():
-    query = Question.query.order_by(Question.id).all()
-    current_questions = paginate_questions(request, query)
-    categories = [category.format() for category in Category.query.all()]
+    """GET /questions endpoint according to page number in args"""
+    questions = Question.query.all()
+    formatted_questions = [question.format() for question in questions]
+    current_questions = paginate_questions(request, formatted_questions)
+
+    categories = {category.id: category.type for category in Category.query.all()}
 
     if len(current_questions) == 0:
       abort(404)
     
     return jsonify({
       'questions': current_questions,
-      'total_questions': len(query),
+      'total_questions': len(questions),
       'categories': categories,
       'current_category': None
     })
