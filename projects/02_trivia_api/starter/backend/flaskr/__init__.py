@@ -139,17 +139,34 @@ def create_app(test_config=None):
         'current_category': {category.id: category.type}
       })
 
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
-  and return a random questions within the given category, 
-  if provided, and that is not one of the previous questions. 
+  @app.route('/quizzes', methods=['POST'])
+  def get_quiz_question():
+    """Retrieve a brand new quiz question within a category, if provided"""
+    
+    previous_questions = request.get_json()['previous_questions']
+    quiz_category = request.get_json()['quiz_category']
 
-  TEST: In the "Play" tab, after a user selects "All" or a category,
-  one question at a time is displayed, the user is allowed to answer
-  and shown whether they were correct or not. 
-  '''
+    try:
+
+      if quiz_category['id'] is not 0:
+        new_questions = Question.query.filter(Question.category == quiz_category['id']).filter(~Question.id.in_(previous_questions))
+      else:
+        new_questions = Question.query.filter(~Question.id.in_(previous_questions))
+      
+      formatted_questions = [question.format() for question in new_questions]
+
+      if (len(formatted_questions) > 0):
+        random_question = random.choice(formatted_questions)
+        return jsonify({
+          'success': True,
+          'question': random_question
+        })
+      else:
+        return jsonify({
+          'success': True
+        })
+    except:
+      abort(500)
 
   @app.errorhandler(400)
   def bad_request(error):
