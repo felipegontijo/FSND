@@ -122,12 +122,22 @@ class QuizView extends Component {
   }
 
   renderFinalScore(){
-    return(
-      <div className="quiz-play-holder">
+    if (this.state.forceEnd === true) {
+      return (
+        <div className="quiz-play-holder">
+        <div className="final-header"> There are no more questions in this category. Your Final Score is {this.state.numCorrect}</div>
+        <div className="play-again button" onClick={this.restartGame}> Play Again? </div>
+        </div>
+      )
+    }
+    else {
+      return (
+        <div className="quiz-play-holder">
         <div className="final-header"> Your Final Score is {this.state.numCorrect}</div>
         <div className="play-again button" onClick={this.restartGame}> Play Again? </div>
-      </div>
-    )
+        </div>
+      )
+    }
   }
 
   evaluateAnswer = () => {
