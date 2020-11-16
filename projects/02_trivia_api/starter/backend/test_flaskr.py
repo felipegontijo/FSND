@@ -86,6 +86,7 @@ class TriviaTestCase(unittest.TestCase):
         DELETE /questions/<question_id>
     '''
     def test_delete_question(self):
+        """Test correct deletion of question from the db"""
         question = Question.query.first()
         res = self.client().delete(f'/questions/{question.id}')
         data = json.loads(res.data)
@@ -93,6 +94,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
     
     def test_404_delete_question(self):
+        """Test handling of deleting a non-existent question"""
         res = self.client().delete('/questions/200')
 
         self.assertEqual(res.status_code, 404)
@@ -100,28 +102,31 @@ class TriviaTestCase(unittest.TestCase):
     '''
         POST /questions
     '''
-    # def test_add_question(self):
-    #     res = self.client().post('/questions', json=self.new_question)
-    #     data = json.loads(res.data)
+    def test_add_question(self):
+        """Test adding new question to the db"""
+        res = self.client().post('/questions', json=self.new_question)
+        data = json.loads(res.data)
         
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
 
     """
         Run the above first, then comment it out and run the one below
         to test correct handling of repeated question addition
     """
-    # def test_422_add_question(self):
-    #     res = self.client().post('/questions', json=self.new_question)
-    #     data = json.loads(res.data)
+    def test_422_add_question(self):
+        """Test handling of adding a repeated question"""
+        res = self.client().post('/questions', json=self.new_question)
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 422)
-    #     self.assertEqual(data['message'], 'unprocessable')
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['message'], 'unprocessable')
 
     '''
         Search questions
     '''
     def test_search_question(self):
+        """Test searching for questions in the db"""
         res = self.client().post('/questions/search', json={'searchTerm': 'a'})
         data = json.loads(res.data)
 
@@ -131,7 +136,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
         self.assertIsNone(data['current_category'])
     
-    def test_404_search_question(self):
+    def test_search_question_none_found(self):
+        """Test for search term matching no questions in db"""
         res = self.client().post('/questions/search', json={'searchTerm': '$'})
         data = json.loads(res.data)
         
