@@ -37,7 +37,7 @@ def create_app(test_config=None):
     formatted_categories = {category.id: category.type for category in categories}
 
     return jsonify({
-      'success': True
+      'success': True,
       'categories': formatted_categories
     })
 
@@ -54,7 +54,7 @@ def create_app(test_config=None):
       abort(404)
     
     return jsonify({
-      'success': True
+      'success': True,
       'questions': current_questions,
       'total_questions': len(questions),
       'categories': categories,
