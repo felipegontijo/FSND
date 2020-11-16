@@ -153,7 +153,7 @@ def create_app(test_config=None):
 
     try:
 
-      if quiz_category['id'] is not 0:
+      if quiz_category['id'] != 0:
         new_questions = Question.query.filter(Question.category == quiz_category['id']).filter(~Question.id.in_(previous_questions))
       else:
         new_questions = Question.query.filter(~Question.id.in_(previous_questions))
