@@ -110,17 +110,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
 
-    """
-        Run the above first, then comment it out and run the one below
-        to test correct handling of repeated question addition
-    """
-    def test_422_add_question(self):
-        """Test handling of adding a repeated question"""
-        res = self.client().post('/questions', json=self.new_question)
-        data = json.loads(res.data)
+    # """
+    #     Run the above first, then comment it out and run the one below
+    #     to test correct handling of repeated question addition
+    # """
+    # def test_422_add_question(self):
+    #     """Test handling of adding a repeated question"""
+    #     res = self.client().post('/questions', json=self.new_question)
+    #     data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 422)
-        self.assertEqual(data['message'], 'unprocessable')
+    #     self.assertEqual(res.status_code, 422)
+    #     self.assertEqual(data['message'], 'unprocessable')
 
     '''
         Search questions
