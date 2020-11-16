@@ -1,6 +1,7 @@
 .vscode
 __pycache__
-# 'env' is ignored in global gitignore
+# 'env' is also ignored in global gitignore
+env
 node_modules/
 
 # OS generated files #
