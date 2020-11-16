@@ -127,22 +127,25 @@ def create_app(test_config=None):
   @app.route('/categories/<int:category_id>/questions')
   def get_categorized_questions(category_id):
     """GET questions of the requested category"""
-    try:
-      category = Category.query.get(category_id)
+    category = Category.query.get(category_id)
+    
+    if category is None:
+      abort(404)
+    else:
+      try:
+        questions = Question.query.filter(Question.category == category.id)
+        formatted_questions = [question.format() for question in questions]
 
-      questions = Question.query.filter(Question.category == category.id)
-      formatted_questions = [question.format() for question in questions]
-
-      total_questions = len(formatted_questions)
-    except:
-      abort(500)
-    finally:
-      return jsonify({
-        'success': True,
-        'questions': formatted_questions,
-        'total_questions': total_questions,
-        'current_category': {category.id: category.type}
-      })
+        total_questions = len(formatted_questions)
+      except:
+        abort(500)
+      finally:
+        return jsonify({
+          'success': True,
+          'questions': formatted_questions,
+          'total_questions': total_questions,
+          'current_category': {category.id: category.type}
+        })
 
   @app.route('/quizzes', methods=['POST'])
   def get_quiz_question():
