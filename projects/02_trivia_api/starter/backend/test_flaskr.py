@@ -102,13 +102,13 @@ class TriviaTestCase(unittest.TestCase):
     '''
         POST /questions
     '''
-    # def test_add_question(self):
-    #     """Test adding new question to the db"""
-    #     res = self.client().post('/questions', json=self.new_question)
-    #     data = json.loads(res.data)
+    def test_add_question(self):
+        """Test adding new question to the db"""
+        res = self.client().post('/questions', json=self.new_question)
+        data = json.loads(res.data)
         
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
 
     # """
     #     Run the above first, then comment it out and run the one below
@@ -163,6 +163,22 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().get(f'/categories/10000/questions')
         
         self.assertEqual(res.status_code, 404)
+    
+    '''
+        Retrieve new question for quiz
+    '''
+    def test_get_quiz_question(self):
+        """Test getting new question for quiz"""
+        request_data = {
+            'previous_questions': [],
+            'quiz_category': {'id': 0} # ALL categories
+        }
+        res = self.client().post('/quizzes', json=request_data)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
 
 
 # Make the tests conveniently executable
