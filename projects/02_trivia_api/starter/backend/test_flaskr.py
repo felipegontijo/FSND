@@ -102,13 +102,13 @@ class TriviaTestCase(unittest.TestCase):
     '''
         POST /questions
     '''
-    def test_add_question(self):
-        """Test adding new question to the db"""
-        res = self.client().post('/questions', json=self.new_question)
-        data = json.loads(res.data)
+    # def test_add_question(self):
+    #     """Test adding new question to the db"""
+    #     res = self.client().post('/questions', json=self.new_question)
+    #     data = json.loads(res.data)
         
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
 
     # """
     #     Run the above first, then comment it out and run the one below
@@ -142,6 +142,27 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         
         self.assertEqual(data['total_questions'], 0)
+    
+    '''
+        GET questions by category
+    '''
+    def test_get_categorized_questions(self):
+        """Test getting questions by certain category"""
+        category = Category.query.first()
+        res = self.client().get(f'/categories/{category.id}/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['total_questions'])
+        self.assertEqual(data['current_category'], {f'{category.id}': category.type})
+    
+    def test_404_category_not_found(self):
+        """Test category not found"""
+        res = self.client().get(f'/categories/10000/questions')
+        
+        self.assertEqual(res.status_code, 404)
 
 
 # Make the tests conveniently executable
