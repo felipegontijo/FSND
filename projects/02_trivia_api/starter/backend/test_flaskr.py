@@ -100,12 +100,12 @@ class TriviaTestCase(unittest.TestCase):
     '''
         POST /questions
     '''
-    def test_add_question(self):
-        res = self.client().post('/questions', json=self.new_question)
-        data = json.loads(res.data)
+    # def test_add_question(self):
+    #     res = self.client().post('/questions', json=self.new_question)
+    #     data = json.loads(res.data)
         
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
 
     """
         Run the above first, then comment it out and run the one below
@@ -117,6 +117,26 @@ class TriviaTestCase(unittest.TestCase):
 
     #     self.assertEqual(res.status_code, 422)
     #     self.assertEqual(data['message'], 'unprocessable')
+
+    '''
+        Search questions
+    '''
+    def test_search_question(self):
+        res = self.client().post('/questions/search', json={'searchTerm': 'a'})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['total_questions'])
+        self.assertIsNone(data['current_category'])
+    
+    def test_404_search_question(self):
+        res = self.client().post('/questions/search', json={'searchTerm': '$'})
+        data = json.loads(res.data)
+        
+        self.assertEqual(data['total_questions'], 0)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
