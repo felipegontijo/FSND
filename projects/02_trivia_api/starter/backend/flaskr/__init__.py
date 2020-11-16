@@ -3,13 +3,12 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
-
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
 def paginate_questions(request, query):
-  """Return questions paginated"""
+  """Return paginated questions"""
   page = request.args.get('page', 1, type=int)
   start = (page - 1) * QUESTIONS_PER_PAGE
   end = start + QUESTIONS_PER_PAGE
@@ -19,31 +18,32 @@ def paginate_questions(request, query):
   return current_questions
 
 def create_app(test_config=None):
-  # create and configure the app
+  """Create and set up the Flask app"""
   app = Flask(__name__)
   setup_db(app)
   CORS(app, resources={r'/api/*': {'origins': '*'}})
 
   @app.after_request
   def after_request(response):
-    """Define CORS acceptances and behavior"""
+    """Define CORS headers"""
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE')
     return response
 
   @app.route('/categories')
   def get_categories():
-    """GET /categories endpoint"""
+    """GET all categories"""
     categories = Category.query.all()
     formatted_categories = {category.id: category.type for category in categories}
 
     return jsonify({
+      'success': True
       'categories': formatted_categories
     })
 
   @app.route('/questions')
   def get_paginated_questions():
-    """GET /questions endpoint according to page number in args"""
+    """GET a list of paginated questions"""
     questions = Question.query.all()
     formatted_questions = [question.format() for question in questions]
     current_questions = paginate_questions(request, formatted_questions)
@@ -54,6 +54,7 @@ def create_app(test_config=None):
       abort(404)
     
     return jsonify({
+      'success': True
       'questions': current_questions,
       'total_questions': len(questions),
       'categories': categories,
@@ -62,7 +63,7 @@ def create_app(test_config=None):
 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_question(question_id):
-    """DELETE /question by its ID from the database"""
+    """DELETE a question from the database"""
     question = Question.query.filter(Question.id == question_id).first_or_404()
     try:
       question.delete()
@@ -105,7 +106,7 @@ def create_app(test_config=None):
 
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
-    """Search question in database with partial string matching"""
+    """Search questions in database with partial string matching"""
     search_term = request.get_json()['searchTerm']
     formatted_search_term = f'%{search_term}%'
 
@@ -126,7 +127,7 @@ def create_app(test_config=None):
 
   @app.route('/categories/<int:category_id>/questions')
   def get_categorized_questions(category_id):
-    """GET questions of the requested category"""
+    """GET questions of a certain category"""
     category = Category.query.get(category_id)
     
     if category is None:
@@ -149,7 +150,7 @@ def create_app(test_config=None):
 
   @app.route('/quizzes', methods=['POST'])
   def get_quiz_question():
-    """Retrieve a brand new quiz question within a category, if provided"""
+    """Retrieve a brand new quiz question within a category"""
     
     previous_questions = request.get_json()['previous_questions']
     quiz_category = request.get_json()['quiz_category']
@@ -178,6 +179,7 @@ def create_app(test_config=None):
 
   @app.errorhandler(400)
   def bad_request(error):
+    """Handle a bad request"""
     return jsonify({
       'error': 400,
       'message': 'bad request'
@@ -185,6 +187,7 @@ def create_app(test_config=None):
   
   @app.errorhandler(404)
   def not_found(error):
+    """Handle resource not found"""
     return jsonify({
       'error': 404,
       'message': 'resource not found'
@@ -192,6 +195,7 @@ def create_app(test_config=None):
   
   @app.errorhandler(422)
   def unprocessable(error):
+    """Handle unprocessable request"""
     return jsonify({
       'error': 422,
       'message': 'unprocessable'
@@ -199,6 +203,7 @@ def create_app(test_config=None):
   
   @app.errorhandler(500)
   def internal_error(error):
+    """Handle internal server error"""
     return jsonify({
       'error': 500,
       'message': 'internal server error'
