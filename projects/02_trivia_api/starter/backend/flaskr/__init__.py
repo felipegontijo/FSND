@@ -83,20 +83,25 @@ def create_app(test_config=None):
     difficulty = request_data['difficulty']
     category = request_data['category']
 
-    try:
-      new_question = Question(
-        question=question,
-        answer=answer,
-        difficulty=difficulty,
-        category=category
-      )
-      new_question.insert()
-    except:
-      abort(500)
-    finally:
-      return jsonify({
-        'success': True
-      })
+    repeated_question = Question.query.filter(Question.question == question).one_or_none()
+
+    if repeated_question is None:
+      try:
+        new_question = Question(
+          question=question,
+          answer=answer,
+          difficulty=difficulty,
+          category=category
+        )
+        new_question.insert()
+      except:
+        abort(500)
+      finally:
+        return jsonify({
+          'success': True
+        })
+    else:
+      abort(422)
 
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
